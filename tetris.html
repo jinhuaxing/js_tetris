@@ -1,9 +1,7 @@
 <!DOCTYPE html>
-
 <html>
    <head>
      <title>Tetris</title>
-
       <style> 
          body {
             background: #dddddd;
@@ -25,11 +23,10 @@
          	}
          	
          	#preview {
-         	position: absolute;
-         	left: 400px;
-         	top:  440px;
-         	background: black;
-         		
+	         	position: absolute;
+	         	left: 400px;
+	         	top:  440px;
+	         	background: black;        		
          	}
         
       </style>
@@ -46,8 +43,8 @@
     </canvas>
     
     <div id='control' align='center'>
-    	   	<tr><input type='button' id='restartButton' value='Restart'/></tr>
-    	   	<tr><input type='button' id='pauseButton' value='Pause'/></tr>
+    	  <input type='button' id='restartButton' value='Restart'/>
+    	  <input type='button' id='pauseButton' value='Pause'/>
     </div>
     <!--
     <script src='tetris.js'></script>
@@ -56,10 +53,10 @@
 var canvas = document.getElementById('canvas'),
     ctx = canvas.getContext('2d');
 var previewCanvas = document.getElementById('preview'),
-    previewCtx = previewCanvas.getContext('2d')
+    previewCtx = previewCanvas.getContext('2d');
 
 var pauseButton = document.getElementById('pauseButton'),
-    restartButton = document.getElementById('restartButton')
+    restartButton = document.getElementById('restartButton');
 
     
 var BLOCK_SIZE = 40,
@@ -76,292 +73,44 @@ var shapes = [
 [{x:1,y:0},{x:2,y:0},{x:0,y:1},{x:1,y:1}]
 ];
 
-function turn(s) {
-  var ret = [{},{},{},{}];
-  var min = 0;
-  var i;
-  for (i = 0; i < s.length; i++) {
-  	ret[i].x = -s[i].y
-  	if (ret[i].x < min) {
-  		min = ret[i].x
-  	}
-  	ret[i].y = s[i].x
-  }
-  for (i = 0; i < s.length; i++) {
-  	ret[i].x += -min
-  }
-  return ret
-}
+var map
+var currentShape
+var previewShape
+var currentX
+var currentY
+var stopped
+var paused
+var timer
 
-function shapeWidth(s) {
-  var len = 0;
-  var i;
-  for (i = 0; i < s.length; i++) {
-    if (s[i].x > len) {
-      len = s[i].x
-    }
-  }
-  return len + 1;
-}
+restart();
 
-function shapeHeight(s) {
-  var len = 0;
-  var i;
-  for (i = 0; i < s.length; i++) {
-    if (s[i].y > len) {
-      len = s[i].y
-    }  
-  }
-  return len + 1;
-}
-
-function createMap(width, height) {
-	var ret = []
-	var i, j
-	for (i = 0; i < height; i++) {
-		ret[i] = []
-		for (j = 0; j < width; j++) {
-			ret[i][j] = 0
-		} 
+window.onkeydown = function(e) {
+	
+	if (stopped) return;
+	
+	if (e.keyCode == 32) {
+	  paused = !paused; 
+	  return;
 	}
-	return ret;
+	
+  switch (e.keyCode) {
+   case 37: e.preventDefault(); goLeft(); break;	
+   case 39: e.preventDefault(); goRight(); break;
+   case 38: e.preventDefault(); goRotate(); break;
+   case 40: e.preventDefault(); goDown(); break;
+  }	
 };
 
-function newMap(srcMap) {
-	var i,j
-	ret = []
-  for (i = 0; i < srcMap.length; i++) {
-    ret[i] = [];
-    for (j = 0; j < srcMap[0].length; j++) {
-      ret[i][j] = srcMap[i][j];
-    }
-  }
-  return ret;
-}
+pauseButton.onclick = function() {
+  	if (stopped) return;
+  	paused = !paused;
+  	return;
+  	
+};
 
-function rowFull(row) {
-   var i;
-   for (i = 0; i < row.length; i++) {
-     if (row[i] == 0) {
-       return false;
-     }	
-   }
-   return true;
-}
-
-function copyRow(map, destRow, srcRow) {
-   var i;
-   for (i = 0; i < map[0].length; i++) {
-      map[destRow][i]	= map[srcRow][i]
-   }	
-}
-
-function fillRow(map, row, v) {
-  var i;
-  for (i = 0; i < map[0].length; i++) {
-    map[row][i] = v;
-  }
-}
-
-function removeRow(map, row) {
-	var i
-	for (i = row; i > 0; i--) {
-	  copyRow(map, i, i-1)
-	}
-	fillRow(map, 0, 0)
-}
-
-function findFull(map) {
-  var ret = []
-  var count = 0
-  var i
-  for(i = 0; i < map.length; i++) {
-    if (rowFull(map[i])) {
-      ret[count] = i;
-      count++;
-    }	
-  }	
-  return ret;
-}
-
-function removeFull(map) {
-	var i = map.length - 1
-	var fullRows = findFull(map);
-	
-	while (i >= 0) {
-		if (rowFull(map[i])) {
-			removeRow(map, i);
-		} else {
-			i--;
-		}
-	}
-	return fullRows;
-}
-
-function canPut(map, shape, x, y) {
-  return canPutPart(map, shape, x, y, 0);
-}
-
-function canPutPart(map, shape, x, y, startY) {
-	var i, tx, ty
-  for (i = 0; i < 4; i++) {
-  	if (shape[i].y < startY) {
-  		continue;
-  	}
-  	tx = shape[i].x + x;
-  	ty = shape[i].y + y;
-    if (ty >= map.length || ty < 0 ) {
-    	return false;
-    }
-    if (tx >= map[0].length || tx < 0) {
-    	return false;
-    }
-    if (map[ty][tx] > 0) {
-    	return false;
-    }
-  }	
-  return true;
-}
-
-function addShape(map, shape, x, y, colorIndex) {
-  var i
-  for (i = 0; i < shape.length; i++) {
-  	map[shape[i].y + y][shape[i].x + x] = colorIndex
-  }	
-}
-
-function goUpOrDown(step) {
-  if (canPut(map, currentShape, currentX, currentY+step)) {  	
-    currentY += step;
-    drawBoard();
-    return true;
-  } else {
-    return false;
-  }
-}
-
-function goDown() {
-  return 	goUpOrDown(1);
-}
-
-function goUp() {
-	return 	goUpOrDown(-1);
-}
-
-function goLeftOrRight(step) {
-  if (canPut(map, currentShape, currentX + step, currentY)) {
-    currentX += step;
-    drawBoard();
-    return true;
-  } else {
-    return false;
-  }
-}
-
-function goLeft() {
-  return goLeftOrRight(-1);	
-}
-
-function goRight() {
-  return goLeftOrRight(1);	
-}
-
-function goRotate() {
-  var nextShape = turn(currentShape);
-  if (canPut(map, nextShape, currentX, currentY)) {
-  	currentShape = nextShape;
-  	drawBoard();
-  	return true;
-  }
-  
-  var tryCount = shapeHeight(currentShape) - shapeWidth(currentShape);
-  var tempX = currentX - 1;
-  while(tryCount > 0) {
-	  if (canPut(map, currentShape, tempX, currentY)) {
-	  	if (canPut(map, nextShape, tempX, currentY)) {
-	      currentShape = nextShape;
-	      currentX = tempX
-	      drawBoard();
-	      return true;
-	    } else {
-	    	tempX = tempX - 1;
-	    }
-	  } else {
-			break;
-	  }
-	  tryCount--;
-	}
-	tryCount = shapeWidth(currentShape) - shapeHeight(currentShape);
- 	var tempY = currentY - 1;
-  while(tryCount > 0) {
-	  if (canPut(map, currentShape, currentX, tempY)) {
-	  	if (canPut(map, nextShape, currentX, tempY)) {
-	   	  currentShape = nextShape;
-	    	currentY = tempY
-	      drawBoard();
-	     return true;
-	    } else {
-	    	tempY = tempY - 1;	
-	    }
-	  } else {
-			break;
-	  }
-	  tryCount--;
-	}
-	
-	return false;
-}
-
-function genNextShape() {
-  	var nextShape = shapes[parseInt(Math.random() * shapes.length)];
-  	var turnCount = parseInt(Math.random() * 4);
-  	for (i = 0; i < turnCount; i++) {
-  	  nextShape = turn(nextShape)
-  	}
-  	return nextShape;	
-}
-
-function drawViewMap (map, startx, starty, shape, x, y, size) {
-	var i,j;
-	ctx.lineJoin='round'
-	ctx.lineWidth=10
-	for (i = 0; i < map.length; i++) {
-		for (j = 0; j < map[0].length; j++) {
-			if (map[i][j] > 0) {
-			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
-			}
-		}	
-	}
-	if (shape == null) {
-		return;
-	}
-	for (i = 0; i < shape.length; i++) {
-		if ( y+shape[i].y >= 0) {
- 	      drawBlock(ctx, 
- 	      				  (x+shape[i].x)*size+startx, 
- 	      				  (y+shape[i].y)*size+starty, 
- 	      				  size, 
- 	      				  size);
-	  }
-	}
-}
-
-function drawBlock(context, x, y, size, size) {
-  context.fillRect(x, y, size, size);
-}
-
-function drawPreview(shape, x, y, size) {
-	var i
-	previewCtx.clearRect(0, 0, 4*size, 4*size);
-	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
-  for (i = 0; i < shape.length; i++) {
-  	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
-  }
-}
-
-function computeCenter(containerLength, shapeLength) {
-  return Math.floor((containerLength - shapeLength) / 2)
-}
+restartButton.onclick = function() {
+  restart();
+};
 
 function drawBoard() {
 	ctx.fillStyle='rgba(100, 100, 100, 1.0)'
@@ -370,7 +119,7 @@ function drawBoard() {
 							map[0].length * BLOCK_SIZE, 
 							map.length * BLOCK_SIZE);
 	ctx.fillStyle='rgba(100, 140, 230, 0.5)'
-  drawViewMap(map, 
+  drawMain(map, 
   						0, 
   						canvas.height - map.length * BLOCK_SIZE, 
   						currentShape, 
@@ -428,7 +177,7 @@ function tick() {
     paused = false
   }
  drawBoard();
-};
+}
 
 function restart() {
 	if (timer) { 
@@ -439,46 +188,298 @@ function restart() {
 	timer = setInterval(tick, 500);
   stopped = false;
   paused = false;	
-};
+}
 
+function goUpOrDown(step) {
+  if (canPut(map, currentShape, currentX, currentY+step)) {  	
+    currentY += step;
+    drawBoard();
+    return true;
+  } else {
+    return false;
+  }
+}
 
-var map
-var currentShape
-var previewShape
-var currentX
-var currentY
-var stopped
-var paused
-var timer
+function goDown() {
+  return 	goUpOrDown(1);
+}
 
-restart();
+function goUp() {
+	return 	goUpOrDown(-1);
+}
 
-window.onkeydown = function(e) {
-	
-	if (stopped) return;
-	
-	if (e.keyCode == 32) {
-	  paused = !paused; 
-	  return;
+function goLeftOrRight(step) {
+  if (canPut(map, currentShape, currentX + step, currentY)) {
+    currentX += step;
+    drawBoard();
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function goLeft() {
+  return goLeftOrRight(-1);	
+}
+
+function goRight() {
+  return goLeftOrRight(1);	
+}
+
+function goRotate() {
+	var tryCount;
+	var tempX, tempY;
+  var nextShape = turn(currentShape);
+  if (canPut(map, nextShape, currentX, currentY)) {
+  	currentShape = nextShape;
+  	drawBoard();
+  	return true;
+  }
+  
+  tryCount = shapeHeight(currentShape) - shapeWidth(currentShape);
+  tempX = currentX - 1;
+  while(tryCount > 0) {
+	  if (canPut(map, currentShape, tempX, currentY)) {
+	  	if (canPut(map, nextShape, tempX, currentY)) {
+	      currentShape = nextShape;
+	      currentX = tempX
+	      drawBoard();
+	      return true;
+	    } else {
+	    	tempX = tempX - 1;
+	    }
+	  } else {
+			break;
+	  }
+	  tryCount--;
+	}
+	tryCount = shapeWidth(currentShape) - shapeHeight(currentShape);
+ 	tempY = currentY - 1;
+  while(tryCount > 0) {
+	  if (canPut(map, currentShape, currentX, tempY)) {
+	  	if (canPut(map, nextShape, currentX, tempY)) {
+	   	  currentShape = nextShape;
+	    	currentY = tempY
+	      drawBoard();
+	     return true;
+	    } else {
+	    	tempY = tempY - 1;	
+	    }
+	  } else {
+			break;
+	  }
+	  tryCount--;
 	}
 	
-  switch (e.keyCode) {
-   case 37: e.preventDefault(); goLeft(); break;	
-   case 39: e.preventDefault(); goRight(); break;
-   case 38: e.preventDefault(); goRotate(); break;
-   case 40: e.preventDefault(); goDown(); break;
+	return false;
+}
+
+function genNextShape() {
+  	var nextShape = shapes[parseInt(Math.random() * shapes.length)];
+  	var turnCount = parseInt(Math.random() * 4);
+  	for (i = 0; i < turnCount; i++) {
+  	  nextShape = turn(nextShape)
+  	}
+  	return nextShape;	
+}
+
+function drawMain (map, startx, starty, shape, x, y, size) {
+	var i,j;
+	ctx.lineJoin = 'round';
+	ctx.lineWidth = 10;
+	for (i = 0; i < map.length; i++) {
+		for (j = 0; j < map[0].length; j++) {
+			if (map[i][j] > 0) {
+			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
+			}
+		}	
+	}
+	if (shape == null) {
+		return;
+	}
+	for (i = 0; i < shape.length; i++) {
+		if ( y+shape[i].y >= 0) {
+ 	      drawBlock(ctx, 
+ 	      				  (x+shape[i].x)*size+startx, 
+ 	      				  (y+shape[i].y)*size+starty, 
+ 	      				  size, 
+ 	      				  size);
+	  }
+	}
+}
+
+function drawBlock(context, x, y, size, size) {
+  context.fillRect(x, y, size, size);
+}
+
+function drawPreview(shape, x, y, size) {
+	var i;
+	previewCtx.clearRect(0, 0, 4*size, 4*size);
+	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
+  for (i = 0; i < shape.length; i++) {
+  	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
+  }
+}
+
+///////////FUNCTIONS/////////////////
+
+function turn(shape) {
+  var ret = [];
+  var min = 0;
+  var i;
+  for (i = 0; i < shape.length; i++) {
+  	ret[i] = new Object();
+  	ret[i].x = -shape[i].y;
+  	if (ret[i].x < min) {
+  		min = ret[i].x;
+  	}
+  	ret[i].y = shape[i].x;
+  }
+  for (i = 0; i < shape.length; i++) {
+  	ret[i].x += -min;
+  }
+  return ret;
+}
+
+function shapeWidth(shape) {
+  var len = 0;
+  var i;
+  for (i = 0; i < shape.length; i++) {
+    if (shape[i].x > len) {
+      len = shape[i].x;
+    }
+  }
+  return len + 1;
+}
+
+function shapeHeight(shape) {
+  var len = 0;
+  var i;
+  for (i = 0; i < shape.length; i++) {
+    if (shape[i].y > len) {
+      len = shape[i].y;
+    }  
+  }
+  return len + 1;
+}
+
+function createMap(width, height) {
+	var ret = [];
+	var i, j;
+	for (i = 0; i < height; i++) {
+		ret[i] = [];
+		for (j = 0; j < width; j++) {
+			ret[i][j] = 0;
+		} 
+	}
+	return ret;
+}
+
+function newMap(srcMap) {
+	var i,j;
+	ret = [];
+  for (i = 0; i < srcMap.length; i++) {
+    ret[i] = [];
+    for (j = 0; j < srcMap[0].length; j++) {
+      ret[i][j] = srcMap[i][j];
+    }
+  }
+  return ret;
+}
+
+function rowFull(row) {
+   var i;
+   for (i = 0; i < row.length; i++) {
+     if (row[i] == 0) {
+       return false;
+     }	
+   }
+   return true;
+}
+
+function copyRow(map, destRow, srcRow) {
+   var i;
+   for (i = 0; i < map[0].length; i++) {
+      map[destRow][i]	= map[srcRow][i];
+   }	
+}
+
+function fillRow(map, row, v) {
+  var i;
+  for (i = 0; i < map[0].length; i++) {
+    map[row][i] = v;
+  }
+}
+
+function removeRow(map, row) {
+	var i;
+	for (i = row; i > 0; i--) {
+	  copyRow(map, i, i-1);
+	}
+	fillRow(map, 0, 0);
+}
+
+function findFull(map) {
+  var ret = [];
+  var count = 0;
+  var i;
+  for(i = 0; i < map.length; i++) {
+    if (rowFull(map[i])) {
+      ret[count] = i;
+      count++;
+    }	
+  }	
+  return ret;
+}
+
+function removeFull(map) {
+	var i = map.length - 1;
+	var fullRows = findFull(map);
+	
+	while (i >= 0) {
+		if (rowFull(map[i])) {
+			removeRow(map, i);
+		} else {
+			i--;
+		}
+	}
+	return fullRows;
+}
+
+function canPut(map, shape, x, y) {
+  return canPutPart(map, shape, x, y, 0);
+}
+
+function canPutPart(map, shape, x, y, startY) {
+	var i, tx, ty;
+  for (i = 0; i < 4; i++) {
+  	if (shape[i].y < startY) {
+  		continue;
+  	}
+  	tx = shape[i].x + x;
+  	ty = shape[i].y + y;
+    if (ty >= map.length || ty < 0 ) {
+    	return false;
+    }
+    if (tx >= map[0].length || tx < 0) {
+    	return false;
+    }
+    if (map[ty][tx] > 0) {
+    	return false;
+    }
+  }	
+  return true;
+}
+
+function addShape(map, shape, x, y, colorIndex) {
+  var i;
+  for (i = 0; i < shape.length; i++) {
+  	map[shape[i].y + y][shape[i].x + x] = colorIndex;
   }	
 }
 
-pauseButton.onclick = function() {
-  	if (stopped) return;
-  	paused = !paused;
-  	return;
-  	
-}
-
-restartButton.onclick = function() {
-  restart();
+function computeCenter(containerLength, shapeLength) {
+  return Math.floor((containerLength - shapeLength) / 2);
 }
 
 </script>
