@@ -112,6 +112,44 @@ restartButton.onclick = function() {
   restart();
 };
 
+function drawMain (map, startx, starty, shape, x, y, size) {
+	var i,j;
+	ctx.lineJoin = 'round';
+	ctx.lineWidth = 10;
+	for (i = 0; i < map.length; i++) {
+		for (j = 0; j < map[0].length; j++) {
+			if (map[i][j] > 0) {
+			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
+			}
+		}	
+	}
+	if (shape == null) {
+		return;
+	}
+	for (i = 0; i < shape.length; i++) {
+		if ( y+shape[i].y >= 0) {
+ 	      drawBlock(ctx, 
+ 	      				  (x+shape[i].x)*size+startx, 
+ 	      				  (y+shape[i].y)*size+starty, 
+ 	      				  size, 
+ 	      				  size);
+	  }
+	}
+}
+
+function drawBlock(context, x, y, size, size) {
+  context.fillRect(x, y, size, size);
+}
+
+function drawPreview(shape, x, y, size) {
+	var i;
+	previewCtx.clearRect(0, 0, 4*size, 4*size);
+	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
+  for (i = 0; i < shape.length; i++) {
+  	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
+  }
+}
+
 function drawBoard() {
 	ctx.fillStyle='rgba(100, 100, 100, 1.0)'
 	ctx.fillRect(0, 
@@ -263,43 +301,7 @@ function genNextShape() {
   	return nextShape;	
 }
 
-function drawMain (map, startx, starty, shape, x, y, size) {
-	var i,j;
-	ctx.lineJoin = 'round';
-	ctx.lineWidth = 10;
-	for (i = 0; i < map.length; i++) {
-		for (j = 0; j < map[0].length; j++) {
-			if (map[i][j] > 0) {
-			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
-			}
-		}	
-	}
-	if (shape == null) {
-		return;
-	}
-	for (i = 0; i < shape.length; i++) {
-		if ( y+shape[i].y >= 0) {
- 	      drawBlock(ctx, 
- 	      				  (x+shape[i].x)*size+startx, 
- 	      				  (y+shape[i].y)*size+starty, 
- 	      				  size, 
- 	      				  size);
-	  }
-	}
-}
 
-function drawBlock(context, x, y, size, size) {
-  context.fillRect(x, y, size, size);
-}
-
-function drawPreview(shape, x, y, size) {
-	var i;
-	previewCtx.clearRect(0, 0, 4*size, 4*size);
-	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
-  for (i = 0; i < shape.length; i++) {
-  	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
-  }
-}
 
 function turn(shape) {
   var ret = [];
