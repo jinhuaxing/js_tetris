@@ -63,6 +63,10 @@ var BLOCK_SIZE = 40,
     BOARD_WIDTH = 10,
     BOARD_HEIGHT = 15;
 
+var fillColor = 'rgba(100, 140, 230, 0.5)',
+    blinkColor1 = 'green',
+    blinkColor2 = 'red';
+
 var shapes = [
 [{x:0,y:0},{x:1,y:0},{x:2,y:0},{x:0,y:1}],
 [{x:0,y:0},{x:1,y:0},{x:2,y:0},{x:2,y:1}],
@@ -81,6 +85,7 @@ var currentY;
 var stopped;
 var paused;
 var timer;
+var blinkColor;
 
 restart();
 
@@ -117,11 +122,17 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 	ctx.lineJoin = 'round';
 	ctx.lineWidth = 10;
 	for (i = 0; i < map.length; i++) {
+		if (rowFull(map[i])) {
+		  ctx.fillStyle = blinkColor;
+		} else {
+		  ctx.fillStyle = fillColor;	
+		}
 		for (j = 0; j < map[0].length; j++) {
 			if (map[i][j] > 0) {
 			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
 			}
 		}	
+		fullRow = false;
 	}
 	if (shape == null) {
 		return;
@@ -144,7 +155,7 @@ function drawBlock(context, x, y, size, size) {
 function drawPreview(shape, x, y, size) {
 	var i;
 	previewCtx.clearRect(0, 0, 4*size, 4*size);
-	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
+	previewCtx.fillStyle = fillColor;
   for (i = 0; i < shape.length; i++) {
   	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
   }
@@ -156,7 +167,6 @@ function drawBoard() {
 							canvas.height - map.length * BLOCK_SIZE, 
 							map[0].length * BLOCK_SIZE, 
 							map.length * BLOCK_SIZE);
-	ctx.fillStyle='rgba(100, 140, 230, 0.5)'
   drawMain(map, 
   						0, 
   						canvas.height - map.length * BLOCK_SIZE, 
@@ -193,28 +203,47 @@ function tick() {
   }
   
   addShape(map, currentShape, currentX, currentY, 1);
-  removeFull(map);
-	currentShape = previewShape; 
-	currentX = computeCenter(map[0].length, shapeWidth(currentShape))
-  previewShape = genNextShape();	
-       	
-  if (canPut(map, currentShape, currentX, 0)) {
-    currentY = 0;
-  } else {
-   	currentY = -shapeHeight(currentShape);
-  	var startY;
-   	for (startY = 1; startY < shapeHeight(currentShape); startY++) {
-   		if (canPutPart(map, currentShape, currentX, -startY, startY)) {
-   		  currentY = -startY;
-   		  break;
-   		}
-   	}     
-    console.log("Cancel timer")
-    clearInterval(timer);
-    stopped = true
-    paused = false
+  if (findFull(map).length > 0) {
+  	currentShape = null;
+    blinkColor = blinkColor1;
+  	drawBoard();
+  	setTimeout(function(){
+  		  	blinkColor = blinkColor2;
+  	      drawBoard();
+  	      setTimeout(function(){
+  	      	  blinkColor = blinkColor1;
+  	      	  drawBoard();
+  	      	  setTimeout(function(){
+  	      	    blinkColor = blinkColor2;
+  	      	    drawBoard();  	      	  	  
+  	      	  	}, 100);
+  	      	}, 100);
+  		}, 100);	
   }
- drawBoard();
+  setTimeout(function() {
+	  removeFull(map);
+		currentShape = previewShape; 
+		currentX = computeCenter(map[0].length, shapeWidth(currentShape))
+	  previewShape = genNextShape();	
+	       	
+	  if (canPut(map, currentShape, currentX, 0)) {
+	    currentY = 0;
+	  } else {
+	   	currentY = -shapeHeight(currentShape);
+	  	var startY;
+	   	for (startY = 1; startY < shapeHeight(currentShape); startY++) {
+	   		if (canPutPart(map, currentShape, currentX, -startY, startY)) {
+	   		  currentY = -startY;
+	   		  break;
+	   		}
+	   	}     
+	    console.log("Cancel timer")
+	    clearInterval(timer);
+	    stopped = true
+	    paused = false
+	  }
+	 drawBoard();
+  }, 310);
 }
 
 function restart() {
