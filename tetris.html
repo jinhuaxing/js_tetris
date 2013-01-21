@@ -227,50 +227,47 @@ function goRight() {
 }
 
 function goRotate() {
-	var tryCount;
-	var tempX, tempY;
   var nextShape = turn(currentShape);
   if (canPut(map, nextShape, currentX, currentY)) {
   	currentShape = nextShape;
   	drawBoard();
   	return true;
   }
-  
-  tryCount = shapeHeight(currentShape) - shapeWidth(currentShape);
-  tempX = currentX - 1;
+  return retryRotate(true, nextShape) || retryRotate(false, nextShape);
+}
+
+function retryRotate(onX, nextShape) {
+
+  var tryCount = onX? (shapeWidth(nextShape) - shapeWidth(currentShape)): 
+                      (shapeHeight(nextShape) - shapeHeight(currentShape));
+  var tempX = currentX;
+  var tempY = currentY;
+  if (onX) { 
+    tempX = currentX - 1;
+  } else {
+    tempY = currentY - 1;
+  }
   while(tryCount > 0) {
-	  if (canPut(map, currentShape, tempX, currentY)) {
-	  	if (canPut(map, nextShape, tempX, currentY)) {
+	  if (canPut(map, currentShape, tempX, tempY)) {
+	  	if (canPut(map, nextShape, tempX, tempY)) {
 	      currentShape = nextShape;
-	      currentX = tempX
+	      currentX = tempX;
+	      currentY = tempY;
 	      drawBoard();
 	      return true;
 	    } else {
-	    	tempX = tempX - 1;
+	      if (onX) {
+	    	  tempX = tempX - 1;
+	    	} else {
+	    	  tempY = tempY - 1;
+	    	}
 	    }
 	  } else {
 			break;
 	  }
 	  tryCount--;
 	}
-	tryCount = shapeWidth(currentShape) - shapeHeight(currentShape);
- 	tempY = currentY - 1;
-  while(tryCount > 0) {
-	  if (canPut(map, currentShape, currentX, tempY)) {
-	  	if (canPut(map, nextShape, currentX, tempY)) {
-	   	  currentShape = nextShape;
-	    	currentY = tempY
-	      drawBoard();
-	     return true;
-	    } else {
-	    	tempY = tempY - 1;	
-	    }
-	  } else {
-			break;
-	  }
-	  tryCount--;
-	}
-	
+
 	return false;
 }
 
