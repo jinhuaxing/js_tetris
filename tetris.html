@@ -73,14 +73,14 @@ var shapes = [
 [{x:1,y:0},{x:2,y:0},{x:0,y:1},{x:1,y:1}]
 ];
 
-var map
-var currentShape
-var previewShape
-var currentX
-var currentY
-var stopped
-var paused
-var timer
+var map;
+var currentShape;
+var previewShape;
+var currentX;
+var currentY;
+var stopped;
+var paused;
+var timer;
 
 restart();
 
@@ -190,76 +190,59 @@ function restart() {
   paused = false;	
 }
 
-function goUpOrDown(step) {
-  if (canPut(map, currentShape, currentX, currentY+step)) {  	
-    currentY += step;
+function tryPut(shape, relativeX, relativeY) {
+  if(canPut(map, shape, 
+            currentX+relativeX, currentY+relativeY)) {
+    currentShape = shape;
+  	currentX += relativeX;
+    currentY += relativeY;
     drawBoard();
     return true;
   } else {
     return false;
-  }
+  }	
 }
 
 function goDown() {
-  return 	goUpOrDown(1);
-}
-
-function goUp() {
-	return 	goUpOrDown(-1);
-}
-
-function goLeftOrRight(step) {
-  if (canPut(map, currentShape, currentX + step, currentY)) {
-    currentX += step;
-    drawBoard();
-    return true;
-  } else {
-    return false;
-  }
+  return tryPut(currentShape, 0, 1);
 }
 
 function goLeft() {
-  return goLeftOrRight(-1);	
+  return tryPut(currentShape, -1, 0);	
 }
 
 function goRight() {
-  return goLeftOrRight(1);	
+  return tryPut(currentShape, 1, 0);	
 }
 
 function goRotate() {
   var nextShape = turn(currentShape);
-  if (canPut(map, nextShape, currentX, currentY)) {
-  	currentShape = nextShape;
-  	drawBoard();
-  	return true;
-  }
-  return retryRotate(true, nextShape) || retryRotate(false, nextShape);
+
+  return tryPut(nextShape, 0, 0) 
+        || retryRotate(true, nextShape) 
+        || retryRotate(false, nextShape);
 }
 
 function retryRotate(onX, nextShape) {
 
   var tryCount = onX? (shapeWidth(nextShape) - shapeWidth(currentShape)): 
                       (shapeHeight(nextShape) - shapeHeight(currentShape));
-  var tempX = currentX;
-  var tempY = currentY;
+  var relativeX = 0;
+  var telativeY = 0;
   if (onX) { 
-    tempX = currentX - 1;
+    relativeX = - 1;
   } else {
-    tempY = currentY - 1;
+    telativeY = - 1;
   }
   while(tryCount > 0) {
-	  if (canPut(map, currentShape, tempX, tempY)) {
-	  	if (canPut(map, nextShape, tempX, tempY)) {
-	      currentShape = nextShape;
-	      currentX = tempX;
-	      currentY = tempY;
-	      drawBoard();
+	  if (canPut(map, currentShape, currentX+relativeX, currentY+telativeY)) {
+	  	if (tryPut(nextShape, relativeX, telativeY)) {
 	      return true;
 	    } else {
 	      if (onX) {
-	    	  tempX = tempX - 1;
+	    	  relativeX = relativeX - 1;
 	    	} else {
-	    	  tempY = tempY - 1;
+	    	  telativeY = telativeY - 1;
 	    	}
 	    }
 	  } else {
@@ -317,8 +300,6 @@ function drawPreview(shape, x, y, size) {
   	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
   }
 }
-
-///////////FUNCTIONS/////////////////
 
 function turn(shape) {
   var ret = [];
