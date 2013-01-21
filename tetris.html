@@ -11,23 +11,49 @@
          	position: absolute;
          	left:0px;
          	top:0px;
+         	margin: 5px;
+         	background: rgba(100,100,100,1.0);
          }
          
          #control {
          	 position: absolute;
-         	 left: 400px;
+           
+         	 left: 410px;
          	 top: 0px;
+         	 margin-top: 5px;
          	 width: 160px;
-         	 height: 440px;
+         	 height: 350px;
          	 background: black;
          	}
          	
          	#preview {
 	         	position: absolute;
-	         	left: 400px;
-	         	top:  440px;
-	         	background: black;        		
+	         	padding: 10px;
+	         	left: 410px;
+	         	top:  355px;
+	         	background: grey;        		
          	}
+         	
+         	#scorePane {
+         	  position: absolute;
+         	  left: 410px;
+         	  top: 515px;
+         	  width: 160px;
+         	  height: 70px;
+         	  font-size: 32pt;
+         	  color: red;
+         	  padding-top: 20px;
+         	  background: black;
+         	}
+         	
+         #control input {
+           width: 120px;
+           height: 50px;
+           margin: 10px;
+           color: rgb(65, 65, 220);
+           font-size: 12pt;
+           font-family: Droid Sans, Arial, Helvetica, sans-serif;
+         }
         
       </style>
    </head>
@@ -38,9 +64,13 @@
       Canvas not supported
     </canvas>
     
-    <canvas id='preview' width='160' height='160'>
+    <canvas id='preview' width='140' height='140'>
       Canvas not supported	
     </canvas>
+    
+    <div id='scorePane' align='center'>
+    	0
+    </div>
     
     <div id='control' align='center'>
     	  <input type='button' id='restartButton' value='Restart'/>
@@ -58,16 +88,22 @@ var previewCanvas = document.getElementById('preview'),
 var pauseButton = document.getElementById('pauseButton'),
     restartButton = document.getElementById('restartButton');
 
+var scorePane = document.getElementById('scorePane');
     
-var BLOCK_SIZE = 40,
-    BOARD_WIDTH = 10,
-    BOARD_HEIGHT = 15;
+var BLOCK_SIZE = 40;
+var BOARD_WIDTH = 10;
+var BOARD_HEIGHT = 15;
+var PREVIEW_BLOCK_SIZE = 35;
 
-var fillColor = 'rgba(100, 140, 230, 0.5)',
-    blinkColor1 = 'green',
-    blinkColor2 = 'red';
+var COLORS = [
+		'rgb(0, 184, 230)',
+		'rgb(255, 0, 0)',
+		'rgb(204, 204, 204)',
+		'rgb(255, 166, 33)',
+		'rgb(0, 184, 0)'
+];
 
-var shapes = [
+var SHAPES = [
 [{x:0,y:0},{x:1,y:0},{x:2,y:0},{x:0,y:1}],
 [{x:0,y:0},{x:1,y:0},{x:2,y:0},{x:2,y:1}],
 [{x:0,y:0},{x:0,y:1},{x:0,y:2},{x:0,y:3}],
@@ -85,42 +121,73 @@ var currentY;
 var stopped;
 var paused;
 var timer;
+var blinking
 var blinkColor;
-
+var score;
+var fillColor = COLORS[0];
+var background = 'rgba(100, 100, 100, 1.0)';
+var blinkColor1 = background;
+var blinkColor2 = fillColor;
+   
 restart();
 
-window.onkeydown = function(e) {
-	
+window.onkeydown = function(e) {	
 	if (stopped) return;
 	
-	if (e.keyCode == 32) {
-	  paused = !paused; 
-	  return;
-	}
-	
   switch (e.keyCode) {
-   case 37: e.preventDefault(); goLeft(); break;	
-   case 39: e.preventDefault(); goRight(); break;
-   case 38: e.preventDefault(); goRotate(); break;
-   case 40: e.preventDefault(); goDown(); break;
+    case 37: e.preventDefault(); goLeft(); break;	
+    case 39: e.preventDefault(); goRight(); break;
+    case 38: e.preventDefault(); goRotate(); break;
+    case 40: e.preventDefault(); goDown(); break;
   }	
 };
 
 pauseButton.onclick = function() {
-  	if (stopped) return;
-  	paused = !paused;
-  	return;
-  	
+ 	if (stopped) { 
+ 		return;
+ 	}	
+ 	paused = !paused;
+ 	updateButtonText();
 };
 
 restartButton.onclick = function() {
   restart();
 };
 
+function updateButtonText() {
+  if (paused) {
+    pauseButton.value = "Resume";	
+  } else {
+    pauseButton.value = "Pause";
+  }
+}
+
+function reset() {
+	map = createMap(BOARD_WIDTH, BOARD_HEIGHT);
+	currentShape = previewShape || genNextShape();
+	previewShape = genNextShape();
+	currentX = computeCenter(map[0].length, shapeWidth(currentShape));
+	currentY = 0;
+	stopped = true;
+	paused = false;	
+	blinking = false;
+	score = 0;
+}
+
+function restart() {
+	if (timer) { 
+		clearInterval(timer); 
+	}
+	reset();
+	drawBoard();
+	timer = setInterval(tick, 500);
+  stopped = false;
+  paused = false;	
+  updateButtonText();
+}
+
 function drawMain (map, startx, starty, shape, x, y, size) {
 	var i,j;
-	ctx.lineJoin = 'round';
-	ctx.lineWidth = 10;
 	for (i = 0; i < map.length; i++) {
 		if (rowFull(map[i])) {
 		  ctx.fillStyle = blinkColor;
@@ -132,9 +199,8 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
 			}
 		}	
-		fullRow = false;
 	}
-	if (shape == null) {
+	if (blinking) {
 		return;
 	}
 	for (i = 0; i < shape.length; i++) {
@@ -162,8 +228,7 @@ function drawPreview(shape, x, y, size) {
 }
 
 function drawBoard() {
-	ctx.fillStyle='rgba(100, 100, 100, 1.0)'
-	ctx.fillRect(0, 
+	ctx.clearRect(0, 
 							canvas.height - map.length * BLOCK_SIZE, 
 							map[0].length * BLOCK_SIZE, 
 							map.length * BLOCK_SIZE);
@@ -177,22 +242,15 @@ function drawBoard() {
   drawPreview(previewShape, 
               computeCenter(4, shapeWidth(previewShape)), 
               computeCenter(4, shapeHeight(previewShape)), 
-              BLOCK_SIZE);
-}
-
-function reset() {
-	map = createMap(BOARD_WIDTH, BOARD_HEIGHT);
-	currentShape = previewShape || genNextShape();
-	previewShape = genNextShape();
-	currentX = computeCenter(map[0].length, shapeWidth(currentShape));
-	currentY = 0;
-	stopped = true;
-	paused = false;	
+              PREVIEW_BLOCK_SIZE);
+  scorePane.innerHTML = score;
 }
 
 function tick() {
 	console.log("Timer is active")
 	var startY;
+	var delay = 0;
+	var fullRow;
 	
   if (paused) { 
 	  return; 
@@ -203,8 +261,9 @@ function tick() {
   }
   
   addShape(map, currentShape, currentX, currentY, 1);
-  if (findFull(map).length > 0) {
-  	currentShape = null;
+  fullRow = findFull(map);
+  if (fullRow.length > 0) {
+  	blinking = true;
     blinkColor = blinkColor1;
   	drawBoard();
   	setTimeout(function(){
@@ -219,8 +278,11 @@ function tick() {
   	      	  	}, 100);
   	      	}, 100);
   		}, 100);	
+  		delay = 310;
   }
   setTimeout(function() {
+  	blinking = false;
+  	score += fullRow.length;
 	  removeFull(map);
 		currentShape = previewShape; 
 		currentX = computeCenter(map[0].length, shapeWidth(currentShape))
@@ -243,18 +305,7 @@ function tick() {
 	    paused = false
 	  }
 	 drawBoard();
-  }, 310);
-}
-
-function restart() {
-	if (timer) { 
-		clearInterval(timer); 
-	}
-	reset();
-	drawBoard();
-	timer = setInterval(tick, 500);
-  stopped = false;
-  paused = false;	
+  }, delay);
 }
 
 function tryPut(shape, relativeX, relativeY) {
@@ -322,15 +373,13 @@ function retryRotate(onX, nextShape) {
 }
 
 function genNextShape() {
-  	var nextShape = shapes[parseInt(Math.random() * shapes.length)];
+  	var nextShape = SHAPES[parseInt(Math.random() * SHAPES.length)];
   	var turnCount = parseInt(Math.random() * 4);
   	for (i = 0; i < turnCount; i++) {
   	  nextShape = turn(nextShape)
   	}
   	return nextShape;	
 }
-
-
 
 function turn(shape) {
   var ret = [];
