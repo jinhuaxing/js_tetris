@@ -80,14 +80,14 @@ function turn(s) {
   var ret = [{},{},{},{}];
   var min = 0;
   var i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < s.length; i++) {
   	ret[i].x = -s[i].y
   	if (ret[i].x < min) {
   		min = ret[i].x
   	}
   	ret[i].y = s[i].x
   }
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < s.length; i++) {
   	ret[i].x += -min
   }
   return ret
@@ -96,7 +96,7 @@ function turn(s) {
 function shapeWidth(s) {
   var len = 0;
   var i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < s.length; i++) {
     if (s[i].x > len) {
       len = s[i].x
     }
@@ -107,7 +107,7 @@ function shapeWidth(s) {
 function shapeHeight(s) {
   var len = 0;
   var i;
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < s.length; i++) {
     if (s[i].y > len) {
       len = s[i].y
     }  
@@ -124,17 +124,15 @@ function createMap(width, height) {
 			ret[i][j] = 0
 		} 
 	}
-	ret.width = width;
-	ret.height = height;
 	return ret;
 };
 
 function newMap(srcMap) {
 	var i,j
 	ret = []
-  for (i = 0; i < srcMap.height; i++) {
+  for (i = 0; i < srcMap.length; i++) {
     ret[i] = [];
-    for (j = 0; j < srcMap.width; j++) {
+    for (j = 0; j < srcMap[0].length; j++) {
       ret[i][j] = srcMap[i][j];
     }
   }
@@ -153,14 +151,14 @@ function rowFull(row) {
 
 function copyRow(map, destRow, srcRow) {
    var i;
-   for (i = 0; i < map[destRow].length; i++) {
+   for (i = 0; i < map[0].length; i++) {
       map[destRow][i]	= map[srcRow][i]
    }	
 }
 
 function fillRow(map, row, v) {
   var i;
-  for (i = 0; i < map[row].length; i++) {
+  for (i = 0; i < map[0].length; i++) {
     map[row][i] = v;
   }
 }
@@ -200,18 +198,18 @@ function removeFull(map) {
 	return fullRows;
 }
 
-function canPut(map, block, x, y) {
-  return canPutPart(map, block, x, y, 0);
+function canPut(map, shape, x, y) {
+  return canPutPart(map, shape, x, y, 0);
 }
 
-function canPutPart(map, block, x, y, startY) {
+function canPutPart(map, shape, x, y, startY) {
 	var i, tx, ty
   for (i = 0; i < 4; i++) {
-  	if (block[i].y < startY) {
+  	if (shape[i].y < startY) {
   		continue;
   	}
-  	tx = block[i].x + x;
-  	ty = block[i].y + y;
+  	tx = shape[i].x + x;
+  	ty = shape[i].y + y;
     if (ty >= map.length || ty < 0 ) {
     	return false;
     }
@@ -225,10 +223,10 @@ function canPutPart(map, block, x, y, startY) {
   return true;
 }
 
-function addBlock(map, block, x, y, colorIndex) {
+function addShape(map, shape, x, y, colorIndex) {
   var i
-  for (i = 0; i < 4; i++) {
-  	map[block[i].y + y][block[i].x + x] = colorIndex
+  for (i = 0; i < shape.length; i++) {
+  	map[shape[i].y + y][shape[i].x + x] = colorIndex
   }	
 }
 
@@ -327,7 +325,7 @@ function drawViewMap (map, startx, starty, shape, x, y, size) {
 	ctx.lineJoin='round'
 	ctx.lineWidth=10
 	for (i = 0; i < map.length; i++) {
-		for (j = 0; j < map[i].length; j++) {
+		for (j = 0; j < map[0].length; j++) {
 			if (map[i][j] > 0) {
 			  drawBrick(ctx, j*size+startx, i*size+starty, size, size);
 			}
@@ -336,7 +334,7 @@ function drawViewMap (map, startx, starty, shape, x, y, size) {
 	if (shape == null) {
 		return;
 	}
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < shape.length; i++) {
 		if ( y+shape[i].y >= 0) {
  	      drawBrick(ctx, 
  	      				  (x+shape[i].x)*size+startx, 
@@ -355,7 +353,7 @@ function drawPreview(shape, x, y, size) {
 	var i
 	previewCtx.clearRect(0, 0, 4*size, 4*size);
 	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
-  for (i = 0; i < 4; i++) {
+  for (i = 0; i < shape.length; i++) {
   	drawBrick(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
   }
 }
@@ -410,7 +408,7 @@ function tick() {
 	  return;
   }
   
-  addBlock(map, currentShape, currentX, currentY, 1);
+  addShape(map, currentShape, currentX, currentY, 1);
   removeFull(map);
 	nextShape = previewShape; 
 	centerX = computeCenter(map[0].length, shapeWidth(nextShape))
