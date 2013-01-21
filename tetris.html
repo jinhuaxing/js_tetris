@@ -268,42 +268,43 @@ function goRight() {
 
 function goRotate() {
   var nextShape = turn(currentShape);
-  var tryCount = shapeHeight(currentShape) - shapeWidth(currentShape);
-  if (tryCount < 0) {
-  	tryCount = 1	
+  if (canPut(map, nextShape, currentX, currentY)) {
+  	currentShape = nextShape;
+  	drawBoard();
+  	return true;
   }
-
-  var tempX = currentX;
-  while(tryCount >= 0) {
-	  if (canPut(map, nextShape, tempX, currentY)) {
-	    currentShape = nextShape;
-	    currentX = tempX
-	    drawBoard();
-	    return true;
-	  } else {
-	  	tempX = tempX - 1
-	  	if (!canPut(map, currentShape, tempX, currentY)) {
-	      break;	
+  
+  var tryCount = shapeHeight(currentShape) - shapeWidth(currentShape);
+  var tempX = currentX - 1;
+  while(tryCount > 0) {
+	  if (canPut(map, currentShape, tempX, currentY)) {
+	  	if (canPut(map, nextShape, tempX, currentY)) {
+	      currentShape = nextShape;
+	      currentX = tempX
+	      drawBoard();
+	      return true;
+	    } else {
+	    	tempX = tempX - 1;
 	    }
+	  } else {
+			break;
 	  }
 	  tryCount--;
 	}
-	var tempY = currentY;
 	tryCount = shapeWidth(currentShape) - shapeHeight(currentShape);
-	if (tryCount < 0) {
-		tryCount = 1
-	}
-  while(tryCount >= 0) {
-	  if (canPut(map, nextShape, currentX, tempY)) {
-	    currentShape = nextShape;
-	    currentY = tempY
-	    drawBoard();
-	    return true;
-	  } else {
-	  	tempY = tempY - 1
-	  	if (!canPut(map, currentShape, currentX, tempY)) {
-	      break;	
+ 	var tempY = currentY - 1;
+  while(tryCount > 0) {
+	  if (canPut(map, currentShape, currentX, tempY)) {
+	  	if (canPut(map, nextShape, currentX, tempY)) {
+	   	  currentShape = nextShape;
+	    	currentY = tempY
+	      drawBoard();
+	     return true;
+	    } else {
+	    	tempY = tempY - 1;	
 	    }
+	  } else {
+			break;
 	  }
 	  tryCount--;
 	}
@@ -312,8 +313,8 @@ function goRotate() {
 }
 
 function genNextShape() {
-  	nextShape = shapes[parseInt(Math.random() * shapes.length)];
-  	turnCount = parseInt(Math.random() * 4);
+  	var nextShape = shapes[parseInt(Math.random() * shapes.length)];
+  	var turnCount = parseInt(Math.random() * 4);
   	for (i = 0; i < turnCount; i++) {
   	  nextShape = turn(nextShape)
   	}
@@ -327,7 +328,7 @@ function drawViewMap (map, startx, starty, shape, x, y, size) {
 	for (i = 0; i < map.length; i++) {
 		for (j = 0; j < map[0].length; j++) {
 			if (map[i][j] > 0) {
-			  drawBrick(ctx, j*size+startx, i*size+starty, size, size);
+			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
 			}
 		}	
 	}
@@ -336,7 +337,7 @@ function drawViewMap (map, startx, starty, shape, x, y, size) {
 	}
 	for (i = 0; i < shape.length; i++) {
 		if ( y+shape[i].y >= 0) {
- 	      drawBrick(ctx, 
+ 	      drawBlock(ctx, 
  	      				  (x+shape[i].x)*size+startx, 
  	      				  (y+shape[i].y)*size+starty, 
  	      				  size, 
@@ -345,7 +346,7 @@ function drawViewMap (map, startx, starty, shape, x, y, size) {
 	}
 }
 
-function drawBrick(context, x, y, size, size) {
+function drawBlock(context, x, y, size, size) {
   context.fillRect(x, y, size, size);
 }
 
@@ -354,7 +355,7 @@ function drawPreview(shape, x, y, size) {
 	previewCtx.clearRect(0, 0, 4*size, 4*size);
 	previewCtx.fillStyle = 'rgba(100, 140, 230, 0.5)';
   for (i = 0; i < shape.length; i++) {
-  	drawBrick(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
+  	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
   }
 }
 
@@ -394,10 +395,6 @@ function reset() {
 
 function tick() {
 	console.log("Timer is active")
-	var nextShape;
-	var turnCount;
-	var i;
-	var centerX;
 	var startY;
 	
   if (paused) { 
@@ -410,19 +407,14 @@ function tick() {
   
   addShape(map, currentShape, currentX, currentY, 1);
   removeFull(map);
-	nextShape = previewShape; 
-	centerX = computeCenter(map[0].length, shapeWidth(nextShape))
-	
-  if (canPut(map, nextShape, centerX, 0)) {
-    currentShape = nextShape;
-    previewShape = genNextShape();
-    currentX = centerX;
+	currentShape = previewShape; 
+	currentX = computeCenter(map[0].length, shapeWidth(currentShape))
+  previewShape = genNextShape();	
+       	
+  if (canPut(map, currentShape, currentX, 0)) {
     currentY = 0;
   } else {
-   	currentShape = nextShape;    	
-   	previewShape = genNextShape();
    	currentY = -shapeHeight(currentShape);
-   	currentX = centerX;
   	var startY;
    	for (startY = 1; startY < shapeHeight(currentShape); startY++) {
    		if (canPutPart(map, currentShape, currentX, -startY, startY)) {
