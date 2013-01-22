@@ -386,7 +386,7 @@ function turn(shape) {
   var min = 0;
   var i;
   for (i = 0; i < shape.length; i++) {
-  	ret[i] = new Object();
+  	ret[i] = {};
   	ret[i].x = -shape[i].y;
   	if (ret[i].x < min) {
   		min = ret[i].x;
@@ -433,18 +433,6 @@ function createMap(width, height) {
 	return ret;
 }
 
-function newMap(srcMap) {
-	var i,j;
-	ret = [];
-  for (i = 0; i < srcMap.length; i++) {
-    ret[i] = [];
-    for (j = 0; j < srcMap[0].length; j++) {
-      ret[i][j] = srcMap[i][j];
-    }
-  }
-  return ret;
-}
-
 function rowFull(row) {
    var i;
    for (i = 0; i < row.length; i++) {
@@ -469,14 +457,6 @@ function fillRow(map, row, v) {
   }
 }
 
-function removeRow(map, row) {
-	var i;
-	for (i = row; i > 0; i--) {
-	  copyRow(map, i, i-1);
-	}
-	fillRow(map, 0, 0);
-}
-
 function findFull(map) {
   var ret = [];
   var count = 0;
@@ -492,16 +472,25 @@ function findFull(map) {
 
 function removeFull(map) {
 	var i = map.length - 1;
-	var fullRows = findFull(map);
-	
-	while (i >= 0) {
-		if (rowFull(map[i])) {
-			removeRow(map, i);
-		} else {
-			i--;
-		}
+	var j;
+	while (i >= 0 && !rowFull(map[i])) {
+	  i--;	
 	}
-	return fullRows;
+	j = i - 1;
+	while (j >= 0) {
+	  while (j >= 0 && rowFull(map[j])) {
+	  	j--;
+	  } 
+	  if (j >= 0) {
+	    copyRow(map, i, j);
+	    i--;
+	    j--;	
+	  }
+	}	
+	while (i >= 0) {
+	  fillRow(map, i, 0);
+	  i--;
+	}
 }
 
 function canPut(map, shape, x, y) {
