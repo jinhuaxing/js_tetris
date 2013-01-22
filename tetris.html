@@ -80,6 +80,7 @@
     <script src='tetris.js'></script>
     -->
 <script>
+"use strict";	
 var canvas = document.getElementById('canvas'),
     ctx = canvas.getContext('2d');
 var previewCanvas = document.getElementById('preview'),
@@ -154,6 +155,8 @@ restartButton.onclick = function() {
   restart();
 };
 
+//=============== FUNCTIONS ===============
+
 function updateButtonText() {
   if (paused) {
     pauseButton.value = "Resume";	
@@ -214,7 +217,7 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 	}
 }
 
-function drawBlock(context, x, y, size, size) {
+function drawBlock(context, x, y, size) {
   context.fillRect(x, y, size, size);
 }
 
@@ -373,12 +376,13 @@ function retryRotate(onX, nextShape) {
 }
 
 function genNextShape() {
-  	var nextShape = SHAPES[parseInt(Math.random() * SHAPES.length)];
-  	var turnCount = parseInt(Math.random() * 4);
-  	for (i = 0; i < turnCount; i++) {
-  	  nextShape = turn(nextShape)
-  	}
-  	return nextShape;	
+	var i;
+  var nextShape = SHAPES[parseInt(Math.random() * SHAPES.length)];
+  var turnCount = parseInt(Math.random() * 4);
+  for (i = 0; i < turnCount; i++) {
+    nextShape = turn(nextShape)
+  }
+  return nextShape;	
 }
 
 function turn(shape) {
