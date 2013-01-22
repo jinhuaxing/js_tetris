@@ -12,7 +12,7 @@
          	left:0px;
          	top:0px;
          	margin: 5px;
-         	background: rgba(100,100,100,1.0);
+         	background: rgb(23,4,8);
          }
          
          #control {
@@ -31,7 +31,7 @@
 	         	padding: 10px;
 	         	left: 410px;
 	         	top:  355px;
-	         	background: grey;        		
+	         	background: rgb(23,4,8);        		
          	}
          	
          	#scorePane {
@@ -50,7 +50,7 @@
            width: 120px;
            height: 50px;
            margin: 10px;
-           color: rgb(65, 65, 220);
+           color: rgb(45, 18, 25);
            font-size: 12pt;
            font-family: Droid Sans, Arial, Helvetica, sans-serif;
          }
@@ -81,15 +81,6 @@
     -->
 <script>
 "use strict";	
-var canvas = document.getElementById('canvas'),
-    ctx = canvas.getContext('2d');
-var previewCanvas = document.getElementById('preview'),
-    previewCtx = previewCanvas.getContext('2d');
-
-var pauseButton = document.getElementById('pauseButton'),
-    restartButton = document.getElementById('restartButton');
-
-var scorePane = document.getElementById('scorePane');
     
 var BLOCK_SIZE = 40;
 var BOARD_WIDTH = 10;
@@ -97,11 +88,10 @@ var BOARD_HEIGHT = 15;
 var PREVIEW_BLOCK_SIZE = 35;
 
 var COLORS = [
-		'rgb(0, 184, 230)',
-		'rgb(255, 0, 0)',
-		'rgb(204, 204, 204)',
-		'rgb(255, 166, 33)',
-		'rgb(0, 184, 0)'
+		'rgb(226, 50, 88)',
+		'rgb(203, 192, 130)',
+		'rgb(103, 145, 123)',
+		'rgb(183, 175, 2)'
 ];
 
 var SHAPES = [
@@ -114,22 +104,30 @@ var SHAPES = [
 [{x:1,y:0},{x:2,y:0},{x:0,y:1},{x:1,y:1}]
 ];
 
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+var previewCanvas = document.getElementById('preview');
+var previewCtx = previewCanvas.getContext('2d');
+var pauseButton = document.getElementById('pauseButton');
+var restartButton = document.getElementById('restartButton');
+var scorePane = document.getElementById('scorePane');
+var fillColor = COLORS[0];
+
 var map;
 var currentShape;
 var previewShape;
 var currentX;
 var currentY;
+var currentColor;
+var previewColor;
 var stopped;
 var paused;
 var timer;
 var blinking
+var blinkOn
 var blinkColor;
 var score;
-var fillColor = COLORS[0];
-var background = 'rgba(100, 100, 100, 1.0)';
-var blinkColor1 = background;
-var blinkColor2 = fillColor;
-   
+
 restart();
 
 window.onkeydown = function(e) {	
@@ -157,23 +155,23 @@ restartButton.onclick = function() {
 
 //=============== FUNCTIONS ===============
 
-function updateButtonText() {
-  if (paused) {
-    pauseButton.value = "Resume";	
-  } else {
-    pauseButton.value = "Pause";
-  }
-}
-
 function reset() {
 	map = createMap(BOARD_WIDTH, BOARD_HEIGHT);
-	currentShape = previewShape || genNextShape();
+	if (previewShape != null) {
+		currentShape = previewShape;
+		currentColor = previewColor;	
+	} else {
+	  currentShape = genNextShape();
+	  currentColor = parseInt(Math.random() * COLORS.length) + 1;
+	}
 	previewShape = genNextShape();
+	previewColor = parseInt(Math.random() * COLORS.length) + 1;
 	currentX = computeCenter(map[0].length, shapeWidth(currentShape));
 	currentY = 0;
 	stopped = true;
 	paused = false;	
 	blinking = false;
+	blinkOn = false;
 	score = 0;
 }
 
@@ -191,15 +189,22 @@ function restart() {
 
 function drawMain (map, startx, starty, shape, x, y, size) {
 	var i,j;
+	var blinkRow = false;
+	ctx.fillStyle = fillColor;
 	for (i = 0; i < map.length; i++) {
 		if (rowFull(map[i])) {
-		  ctx.fillStyle = blinkColor;
+		  blinkRow = true;
 		} else {
-		  ctx.fillStyle = fillColor;	
+		  blinkRow = false;	
 		}
 		for (j = 0; j < map[0].length; j++) {
 			if (map[i][j] > 0) {
-			  drawBlock(ctx, j*size+startx, i*size+starty, size, size);
+				if (blinkRow && blinkOn) {
+					ctx.clearRect(ctx, j*size+startx, i*size+starty, size, size);
+				} else {
+					ctx.fillStyle = COLORS[map[i][j]-1];
+			    drawBlock(ctx, j*size+startx, i*size+starty, size, size);
+			  }
 			}
 		}	
 	}
@@ -208,6 +213,7 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 	}
 	for (i = 0; i < shape.length; i++) {
 		if ( y+shape[i].y >= 0) {
+			  ctx.fillStyle = COLORS[currentColor-1];
  	      drawBlock(ctx, 
  	      				  (x+shape[i].x)*size+startx, 
  	      				  (y+shape[i].y)*size+starty, 
@@ -218,13 +224,17 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 }
 
 function drawBlock(context, x, y, size) {
-  context.fillRect(x, y, size, size);
+	context.lineWidth = 1;
+	context.strokeStyle = 'rgb(23,4,8)';
+	context.lineJoin = 'round';
+	context.strokeRect(x+1, y+1, size-1, size-1);
+  context.fillRect(x+2, y+2, size-2, size-2);
 }
 
 function drawPreview(shape, x, y, size) {
 	var i;
 	previewCtx.clearRect(0, 0, 4*size, 4*size);
-	previewCtx.fillStyle = fillColor;
+	previewCtx.fillStyle = COLORS[previewColor-1];
   for (i = 0; i < shape.length; i++) {
   	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
   }
@@ -249,6 +259,14 @@ function drawBoard() {
   scorePane.innerHTML = score;
 }
 
+function updateButtonText() {
+  if (paused) {
+    pauseButton.value = "Resume";	
+  } else {
+    pauseButton.value = "Pause";
+  }
+}
+
 function tick() {
 	console.log("Timer is active")
 	var startY;
@@ -263,20 +281,20 @@ function tick() {
 	  return;
   }
   
-  addShape(map, currentShape, currentX, currentY, 1);
+  addShape(map, currentShape, currentX, currentY, currentColor);
   fullRow = findFull(map);
   if (fullRow.length > 0) {
   	blinking = true;
-    blinkColor = blinkColor1;
+    blinkOn = true;
   	drawBoard();
   	setTimeout(function(){
-  		  	blinkColor = blinkColor2;
+  		  	blinkOn = false;
   	      drawBoard();
   	      setTimeout(function(){
-  	      	  blinkColor = blinkColor1;
+  	      	  blinkOn = true;
   	      	  drawBoard();
   	      	  setTimeout(function(){
-  	      	    blinkColor = blinkColor2;
+  	      	    blinkOn = false;
   	      	    drawBoard();  	      	  	  
   	      	  	}, 100);
   	      	}, 100);
@@ -288,8 +306,10 @@ function tick() {
   	score += fullRow.length;
 	  removeFull(map);
 		currentShape = previewShape; 
+		currentColor = previewColor;
 		currentX = computeCenter(map[0].length, shapeWidth(currentShape))
 	  previewShape = genNextShape();	
+	  previewColor = parseInt(Math.random() * COLORS.length) + 1;
 	       	
 	  if (canPut(map, currentShape, currentX, 0)) {
 	    currentY = 0;
