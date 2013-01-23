@@ -16,8 +16,7 @@
          }
          
          #control {
-         	 position: absolute;
-           
+         	 position: absolute;           
          	 left: 410px;
          	 top: 0px;
          	 margin-top: 5px;
@@ -105,13 +104,13 @@ var SHAPES = [
 ];
 
 var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
 var previewCanvas = document.getElementById('preview');
+var controlPane = document.getElementById('control');
+var scorePane = document.getElementById('scorePane');
+var ctx = canvas.getContext('2d');
 var previewCtx = previewCanvas.getContext('2d');
 var pauseButton = document.getElementById('pauseButton');
 var restartButton = document.getElementById('restartButton');
-var scorePane = document.getElementById('scorePane');
-var fillColor = COLORS[0];
 
 var map;
 var currentShape;
@@ -128,6 +127,7 @@ var blinkOn
 var blinkColor;
 var score;
 
+moveToCenter();
 restart();
 
 window.onkeydown = function(e) {	
@@ -187,16 +187,19 @@ function restart() {
   updateButtonText();
 }
 
+function moveToCenter() {
+	var startx = (window.screen.availWidth - 570) / 2;
+	canvas.style.left = startx + "px";
+	preview.style.left = (startx + 410) + "px"; 
+	controlPane.style.left = (startx + 410) + "px"
+	scorePane.style.left = 	(startx + 410) + "px"
+}
+
 function drawMain (map, startx, starty, shape, x, y, size) {
 	var i,j;
 	var blinkRow = false;
-	ctx.fillStyle = fillColor;
 	for (i = 0; i < map.length; i++) {
-		if (rowFull(map[i])) {
-		  blinkRow = true;
-		} else {
-		  blinkRow = false;	
-		}
+		blinkRow = (rowFull(map[i]) > 0);
 		for (j = 0; j < map[0].length; j++) {
 			if (map[i][j] > 0) {
 				if (blinkRow && blinkOn) {
@@ -272,6 +275,8 @@ function tick() {
 	var startY;
 	var delay = 0;
 	var fullRow;
+	var i;
+	var timeoutValue;
 	
   if (paused) { 
 	  return; 
@@ -286,20 +291,15 @@ function tick() {
   if (fullRow.length > 0) {
   	blinking = true;
     blinkOn = true;
-  	drawBoard();
-  	setTimeout(function(){
-  		  	blinkOn = false;
-  	      drawBoard();
-  	      setTimeout(function(){
-  	      	  blinkOn = true;
+  	drawBoard();  	
+  	for (i = 0; i < 3; i++) {
+  		timeoutValue = (i + 1) * 100;
+  		setTimeout(function(){
+  	      	  blinkOn = !blinkOn;
   	      	  drawBoard();
-  	      	  setTimeout(function(){
-  	      	    blinkOn = false;
-  	      	    drawBoard();  	      	  	  
-  	      	  	}, 100);
-  	      	}, 100);
-  		}, 100);	
-  		delay = 310;
+  	  }, timeoutValue);
+  	} 	
+ 		delay = 310;
   }
   setTimeout(function() {
   	blinking = false;
@@ -313,6 +313,7 @@ function tick() {
 	       	
 	  if (canPut(map, currentShape, currentX, 0)) {
 	    currentY = 0;
+	    drawBoard();
 	  } else {
 	   	currentY = -shapeHeight(currentShape);
 	  	var startY;
@@ -322,13 +323,15 @@ function tick() {
 	   		  break;
 	   		}
 	   	}     
-	    console.log("Cancel timer")
+	    stopped = true;
+	    paused = false;
+	    drawBoard();
+	    ctx.font = '32pt Helvetica';
+	    ctx.fillStyle = 'red';
+	    ctx.fillText('GAME OVER', canvas.width/2 - 130, 200);
 	    clearInterval(timer);
-	    stopped = true
-	    paused = false
 	  }
-	 drawBoard();
-  }, delay);
+	}, delay);
 }
 
 function tryPut(shape, relativeX, relativeY) {
