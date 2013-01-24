@@ -227,11 +227,7 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 }
 
 function drawBlock(context, x, y, size) {
-	context.lineWidth = 1;
-	context.strokeStyle = 'rgb(23,4,8)';
-	context.lineJoin = 'round';
-	context.strokeRect(x+1, y+1, size-1, size-1);
-  context.fillRect(x+2, y+2, size-2, size-2);
+  context.fillRect(x+1, y+1, size-2, size-2);
 }
 
 function drawPreview(shape, x, y, size) {
