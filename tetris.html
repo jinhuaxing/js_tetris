@@ -7,41 +7,42 @@
             background: #dddddd;
          }
 
-         #canvas {
+         #mainPane {
          	position: absolute;
-         	left:0px;
-         	top:0px;
-         	margin: 5px;
+         	left: 50%;
+         	margin-left: -285px;
+         }
+
+         #canvas {
+         	float: left;
          	background: rgb(23,4,8);
          }
+
+				 #controlPane {
+				  	float: right;	
+				  	margin-left: 3px;
+				 }
          
          #control {
-         	 position: absolute;           
-         	 left: 410px;
-         	 top: 0px;
-         	 margin-top: 5px;
          	 width: 160px;
          	 height: 350px;
          	 background: black;
+         }
+         	
+         	#previewPane {
+         		height: 160px;	
          	}
          	
          	#preview {
-	         	position: absolute;
-	         	padding: 10px;
-	         	left: 410px;
-	         	top:  355px;
+	         	padding: 10px; 
 	         	background: rgb(23,4,8);        		
          	}
          	
          	#scorePane {
-         	  position: absolute;
-         	  left: 410px;
-         	  top: 515px;
-         	  width: 160px;
          	  height: 70px;
          	  font-size: 32pt;
          	  color: red;
-         	  padding-top: 20px;
+         	  padding-top: 20px; 
          	  background: black;
          	}
          	
@@ -50,34 +51,33 @@
            height: 50px;
            margin: 10px;
            color: rgb(45, 18, 25);
-           font-size: 12pt;
-           font-family: Droid Sans, Arial, Helvetica, sans-serif;
-         }
-        
+           font-size: 14pt;
+           font-family: "Lucida Grande", Verdana, Lucida, Arial, Helvetica, sans-serif;;
+         }      
       </style>
    </head>
 
   <body>
+  	<div id='mainPane'>	
+	    <canvas id='canvas' width='400' height='600'>
+	      Canvas not supported
+	    </canvas>    
+	    <div id='controlPane'>	    	
+	      <div id='control' align='center'>
+		    	  <input type='button' id='restartButton' value='Restart'/>
+		    	  <input type='button' id='pauseButton' value='Pause'/>
+		    </div>		    
+		    <div id='previewPane'>
+			    <canvas id='preview' width='140' height='140'>
+			      Canvas not supported	
+			    </canvas>
+		    </div>	    
+		    <div id='scorePane' align='center'>
+		    	<p>0</p>
+		    </div>	    
+	    </div>    
+    </div>
 
-    <canvas id='canvas' width='400' height='600'>
-      Canvas not supported
-    </canvas>
-    
-    <canvas id='preview' width='140' height='140'>
-      Canvas not supported	
-    </canvas>
-    
-    <div id='scorePane' align='center'>
-    	0
-    </div>
-    
-    <div id='control' align='center'>
-    	  <input type='button' id='restartButton' value='Restart'/>
-    	  <input type='button' id='pauseButton' value='Pause'/>
-    </div>
-    <!--
-    <script src='tetris.js'></script>
-    -->
 <script>
 "use strict";	
     
@@ -127,11 +127,10 @@ var blinkOn
 var blinkColor;
 var score;
 
-moveToCenter();
 restart();
 
 window.onkeydown = function(e) {	
-	if (stopped) return;
+	if (stopped || paused) return;
 	
   switch (e.keyCode) {
     case 37: e.preventDefault(); goLeft(); break;	
@@ -185,14 +184,6 @@ function restart() {
   stopped = false;
   paused = false;	
   updateButtonText();
-}
-
-function moveToCenter() {
-	var startx = (window.screen.availWidth - 570) / 2;
-	canvas.style.left = startx + "px";
-	preview.style.left = (startx + 410) + "px"; 
-	controlPane.style.left = (startx + 410) + "px"
-	scorePane.style.left = 	(startx + 410) + "px"
 }
 
 function drawMain (map, startx, starty, shape, x, y, size) {
