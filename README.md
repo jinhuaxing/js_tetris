@@ -1,4 +1,4 @@
-The classic tetris game. 
+The classic Tetris game. 
 =========
 
-My first Javascript program, a C-style attempt.
+My first JavaScript program, a C-style attempt.
