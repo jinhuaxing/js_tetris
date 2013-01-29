@@ -4,48 +4,48 @@
      <title>Tetris</title>
       <style> 
          body {
-            background: #dddddd;
+           background: #dddddd;
          }
 
          #mainPane {
-         	position: absolute;
-         	left: 50%;
-         	margin-left: -285px;
+           position: absolute;
+           left: 50%;
+           margin-left: -285px;
          }
 
          #canvas {
-         	float: left;
-         	background: rgb(23,4,8);
+           float: left;
+           background: rgb(23,4,8);
          }
 
-				 #controlPane {
-				  	float: right;	
-				  	margin-left: 3px;
-				 }
+         #controlPane {
+           float: right; 
+           margin-left: 3px;
+         }
          
          #control {
-         	 width: 160px;
-         	 height: 350px;
-         	 background: black;
+           width: 160px;
+           height: 350px;
+           background: black;
          }
-         	
-         	#previewPane {
-         		height: 160px;	
-         	}
-         	
-         	#preview {
-	         	padding: 10px; 
-	         	background: rgb(23,4,8);        		
-         	}
-         	
-         	#scorePane {
-         	  height: 70px;
-         	  font-size: 32pt;
-         	  color: red;
-         	  padding-top: 20px; 
-         	  background: black;
-         	}
-         	
+          
+         #previewPane {
+           height: 160px;  
+         }
+          
+         #preview {
+            padding: 10px; 
+            background: rgb(23,4,8);            
+         }
+          
+         #scorePane {
+           height: 70px;
+           font-size: 32pt;
+           color: red;
+           padding-top: 20px; 
+           background: black;
+         }
+          
          #control input {
            width: 120px;
            height: 50px;
@@ -58,28 +58,28 @@
    </head>
 
   <body>
-  	<div id='mainPane'>	
-	    <canvas id='canvas' width='400' height='600'>
-	      Canvas not supported
-	    </canvas>    
-	    <div id='controlPane'>	    	
-	      <div id='control' align='center'>
-		    	  <input type='button' id='restartButton' value='Restart'/>
-		    	  <input type='button' id='pauseButton' value='Pause'/>
-		    </div>		    
-		    <div id='previewPane'>
-			    <canvas id='preview' width='140' height='140'>
-			      Canvas not supported	
-			    </canvas>
-		    </div>	    
-		    <div id='scorePane' align='center'>
-		    	<p>0</p>
-		    </div>	    
-	    </div>    
+    <div id='mainPane'> 
+      <canvas id='canvas' width='400' height='600'>
+        Canvas not supported
+      </canvas>    
+      <div id='controlPane'>        
+        <div id='control' align='center'>
+            <input type='button' id='restartButton' value='Restart'/>
+            <input type='button' id='pauseButton' value='Pause'/>
+        </div>        
+        <div id='previewPane'>
+          <canvas id='preview' width='140' height='140'>
+            Canvas not supported  
+          </canvas>
+        </div>      
+        <div id='scorePane' align='center'>
+          <p>0</p>
+        </div>      
+      </div>    
     </div>
 
 <script>
-"use strict";	
+"use strict"; 
     
 var BLOCK_SIZE = 40;
 var BOARD_WIDTH = 10;
@@ -87,10 +87,10 @@ var BOARD_HEIGHT = 15;
 var PREVIEW_BLOCK_SIZE = 35;
 
 var COLORS = [
-		'rgb(226, 50, 88)',
-		'rgb(203, 192, 130)',
-		'rgb(103, 145, 123)',
-		'rgb(183, 175, 2)'
+    'rgb(226, 50, 88)',
+    'rgb(203, 192, 130)',
+    'rgb(103, 145, 123)',
+    'rgb(183, 175, 2)'
 ];
 
 var SHAPES = [
@@ -129,23 +129,23 @@ var score;
 
 restart();
 
-window.onkeydown = function(e) {	
-	if (stopped || paused) return;
-	
+window.onkeydown = function(e) {  
+  if (stopped || paused) return;
+  
   switch (e.keyCode) {
-    case 37: e.preventDefault(); goLeft(); break;	
+    case 37: e.preventDefault(); goLeft(); break; 
     case 39: e.preventDefault(); goRight(); break;
     case 38: e.preventDefault(); goRotate(); break;
     case 40: e.preventDefault(); goDown(); break;
-  }	
+  } 
 };
 
 pauseButton.onclick = function() {
- 	if (stopped) { 
- 		return;
- 	}	
- 	paused = !paused;
- 	updateButtonText();
+  if (stopped) { 
+    return;
+  } 
+  paused = !paused;
+  updateButtonText();
 };
 
 restartButton.onclick = function() {
@@ -155,66 +155,66 @@ restartButton.onclick = function() {
 //=============== FUNCTIONS ===============
 
 function reset() {
-	map = createMap(BOARD_WIDTH, BOARD_HEIGHT);
-	if (previewShape != null) {
-		currentShape = previewShape;
-		currentColor = previewColor;	
-	} else {
-	  currentShape = genNextShape();
-	  currentColor = parseInt(Math.random() * COLORS.length) + 1;
-	}
-	previewShape = genNextShape();
-	previewColor = parseInt(Math.random() * COLORS.length) + 1;
-	currentX = computeCenter(map[0].length, shapeWidth(currentShape));
-	currentY = 0;
-	stopped = true;
-	paused = false;	
-	blinking = false;
-	blinkOn = false;
-	score = 0;
+  map = createMap(BOARD_WIDTH, BOARD_HEIGHT);
+  if (previewShape != null) {
+    currentShape = previewShape;
+    currentColor = previewColor;  
+  } else {
+    currentShape = genNextShape();
+    currentColor = parseInt(Math.random() * COLORS.length) + 1;
+  }
+  previewShape = genNextShape();
+  previewColor = parseInt(Math.random() * COLORS.length) + 1;
+  currentX = computeCenter(map[0].length, shapeWidth(currentShape));
+  currentY = 0;
+  stopped = true;
+  paused = false; 
+  blinking = false;
+  blinkOn = false;
+  score = 0;
 }
 
 function restart() {
-	if (timer) { 
-		clearInterval(timer); 
-	}
-	reset();
-	drawBoard();
-	timer = setInterval(tick, 500);
+  if (timer) { 
+    clearInterval(timer); 
+  }
+  reset();
+  drawBoard();
+  timer = setInterval(tick, 500);
   stopped = false;
-  paused = false;	
+  paused = false; 
   updateButtonText();
 }
 
 function drawMain (map, startx, starty, shape, x, y, size) {
-	var i,j;
-	var blinkRow = false;
-	for (i = 0; i < map.length; i++) {
-		blinkRow = (rowFull(map[i]) > 0);
-		for (j = 0; j < map[0].length; j++) {
-			if (map[i][j] > 0) {
-				if (blinkRow && blinkOn) {
-					ctx.clearRect(ctx, j*size+startx, i*size+starty, size, size);
-				} else {
-					ctx.fillStyle = COLORS[map[i][j]-1];
-			    drawBlock(ctx, j*size+startx, i*size+starty, size, size);
-			  }
-			}
-		}	
-	}
-	if (blinking) {
-		return;
-	}
-	for (i = 0; i < shape.length; i++) {
-		if ( y+shape[i].y >= 0) {
-			  ctx.fillStyle = COLORS[currentColor-1];
- 	      drawBlock(ctx, 
- 	      				  (x+shape[i].x)*size+startx, 
- 	      				  (y+shape[i].y)*size+starty, 
- 	      				  size, 
- 	      				  size);
-	  }
-	}
+  var i,j;
+  var blinkRow = false;
+  for (i = 0; i < map.length; i++) {
+    blinkRow = (rowFull(map[i]) > 0);
+    for (j = 0; j < map[0].length; j++) {
+      if (map[i][j] > 0) {
+        if (blinkRow && blinkOn) {
+          ctx.clearRect(ctx, j*size+startx, i*size+starty, size, size);
+        } else {
+          ctx.fillStyle = COLORS[map[i][j]-1];
+          drawBlock(ctx, j*size+startx, i*size+starty, size, size);
+        }
+      }
+    } 
+  }
+  if (blinking) {
+    return;
+  }
+  for (i = 0; i < shape.length; i++) {
+    if ( y+shape[i].y >= 0) {
+        ctx.fillStyle = COLORS[currentColor-1];
+        drawBlock(ctx, 
+                  (x+shape[i].x)*size+startx, 
+                  (y+shape[i].y)*size+starty, 
+                  size, 
+                  size);
+    }
+  }
 }
 
 function drawBlock(context, x, y, size) {
@@ -222,26 +222,26 @@ function drawBlock(context, x, y, size) {
 }
 
 function drawPreview(shape, x, y, size) {
-	var i;
-	previewCtx.clearRect(0, 0, 4*size, 4*size);
-	previewCtx.fillStyle = COLORS[previewColor-1];
+  var i;
+  previewCtx.clearRect(0, 0, 4*size, 4*size);
+  previewCtx.fillStyle = COLORS[previewColor-1];
   for (i = 0; i < shape.length; i++) {
-  	drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
+    drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
   }
 }
 
 function drawBoard() {
-	ctx.clearRect(0, 
-							canvas.height - map.length * BLOCK_SIZE, 
-							map[0].length * BLOCK_SIZE, 
-							map.length * BLOCK_SIZE);
+  ctx.clearRect(0, 
+              canvas.height - map.length * BLOCK_SIZE, 
+              map[0].length * BLOCK_SIZE, 
+              map.length * BLOCK_SIZE);
   drawMain(map, 
-  						0, 
-  						canvas.height - map.length * BLOCK_SIZE, 
-  						currentShape, 
-  						currentX, 
-  						currentY, 
-  						BLOCK_SIZE);
+              0, 
+              canvas.height - map.length * BLOCK_SIZE, 
+              currentShape, 
+              currentX, 
+              currentY, 
+              BLOCK_SIZE);
   drawPreview(previewShape, 
               computeCenter(4, shapeWidth(previewShape)), 
               computeCenter(4, shapeHeight(previewShape)), 
@@ -251,87 +251,87 @@ function drawBoard() {
 
 function updateButtonText() {
   if (paused) {
-    pauseButton.value = "Resume";	
+    pauseButton.value = "Resume"; 
   } else {
     pauseButton.value = "Pause";
   }
 }
 
 function tick() {
-	console.log("Timer is active")
-	var startY;
-	var delay = 0;
-	var fullRow;
-	var i;
-	var timeoutValue;
-	
+  console.log("Timer is active")
+  var startY;
+  var delay = 0;
+  var fullRow;
+  var i;
+  var timeoutValue;
+  
   if (paused) { 
-	  return; 
+    return; 
   }
   
   if (goDown()) {
-	  return;
+    return;
   }
   
   addShape(map, currentShape, currentX, currentY, currentColor);
   fullRow = findFull(map);
   if (fullRow.length > 0) {
-  	blinking = true;
+    blinking = true;
     blinkOn = true;
-  	drawBoard();  	
-  	for (i = 0; i < 3; i++) {
-  		timeoutValue = (i + 1) * 100;
-  		setTimeout(function(){
-  	      	  blinkOn = !blinkOn;
-  	      	  drawBoard();
-  	  }, timeoutValue);
-  	} 	
- 		delay = 310;
+    drawBoard();    
+    for (i = 0; i < 3; i++) {
+      timeoutValue = (i + 1) * 100;
+      setTimeout(function(){
+              blinkOn = !blinkOn;
+              drawBoard();
+      }, timeoutValue);
+    }   
+    delay = 310;
   }
   setTimeout(function() {
-  	blinking = false;
-  	score += fullRow.length;
-	  removeFull(map);
-		currentShape = previewShape; 
-		currentColor = previewColor;
-		currentX = computeCenter(map[0].length, shapeWidth(currentShape))
-	  previewShape = genNextShape();	
-	  previewColor = parseInt(Math.random() * COLORS.length) + 1;
-	       	
-	  if (canPut(map, currentShape, currentX, 0)) {
-	    currentY = 0;
-	    drawBoard();
-	  } else {
-	   	currentY = -shapeHeight(currentShape);
-	  	var startY;
-	   	for (startY = 1; startY < shapeHeight(currentShape); startY++) {
-	   		if (canPutPart(map, currentShape, currentX, -startY, startY)) {
-	   		  currentY = -startY;
-	   		  break;
-	   		}
-	   	}     
-	    stopped = true;
-	    paused = false;
-	    drawBoard();
-	    ctx.font = '32pt Helvetica';
-	    ctx.fillStyle = 'red';
-	    ctx.fillText('GAME OVER', canvas.width/2 - 130, 200);
-	    clearInterval(timer);
-	  }
-	}, delay);
+    blinking = false;
+    score += fullRow.length;
+    removeFull(map);
+    currentShape = previewShape; 
+    currentColor = previewColor;
+    currentX = computeCenter(map[0].length, shapeWidth(currentShape))
+    previewShape = genNextShape();  
+    previewColor = parseInt(Math.random() * COLORS.length) + 1;
+          
+    if (canPut(map, currentShape, currentX, 0)) {
+      currentY = 0;
+      drawBoard();
+    } else {
+      currentY = -shapeHeight(currentShape);
+      var startY;
+      for (startY = 1; startY < shapeHeight(currentShape); startY++) {
+        if (canPutPart(map, currentShape, currentX, -startY, startY)) {
+          currentY = -startY;
+          break;
+        }
+      }     
+      stopped = true;
+      paused = false;
+      drawBoard();
+      ctx.font = '32pt Helvetica';
+      ctx.fillStyle = 'red';
+      ctx.fillText('GAME OVER', canvas.width/2 - 130, 200);
+      clearInterval(timer);
+    }
+  }, delay);
 }
 
 function tryPut(shape, relativeX, relativeY) {
   if(canPut(map, shape, 
             currentX+relativeX, currentY+relativeY)) {
     currentShape = shape;
-  	currentX += relativeX;
+    currentX += relativeX;
     currentY += relativeY;
     drawBoard();
     return true;
   } else {
     return false;
-  }	
+  } 
 }
 
 function goDown() {
@@ -339,11 +339,11 @@ function goDown() {
 }
 
 function goLeft() {
-  return tryPut(currentShape, -1, 0);	
+  return tryPut(currentShape, -1, 0); 
 }
 
 function goRight() {
-  return tryPut(currentShape, 1, 0);	
+  return tryPut(currentShape, 1, 0);  
 }
 
 function goRotate() {
@@ -366,33 +366,33 @@ function retryRotate(onX, nextShape) {
     telativeY = - 1;
   }
   while(tryCount > 0) {
-	  if (canPut(map, currentShape, currentX+relativeX, currentY+telativeY)) {
-	  	if (tryPut(nextShape, relativeX, telativeY)) {
-	      return true;
-	    } else {
-	      if (onX) {
-	    	  relativeX = relativeX - 1;
-	    	} else {
-	    	  telativeY = telativeY - 1;
-	    	}
-	    }
-	  } else {
-			break;
-	  }
-	  tryCount--;
-	}
+    if (canPut(map, currentShape, currentX+relativeX, currentY+telativeY)) {
+      if (tryPut(nextShape, relativeX, telativeY)) {
+        return true;
+      } else {
+        if (onX) {
+          relativeX = relativeX - 1;
+        } else {
+          telativeY = telativeY - 1;
+        }
+      }
+    } else {
+      break;
+    }
+    tryCount--;
+  }
 
-	return false;
+  return false;
 }
 
 function genNextShape() {
-	var i;
+  var i;
   var nextShape = SHAPES[parseInt(Math.random() * SHAPES.length)];
   var turnCount = parseInt(Math.random() * 4);
   for (i = 0; i < turnCount; i++) {
     nextShape = turn(nextShape)
   }
-  return nextShape;	
+  return nextShape; 
 }
 
 function turn(shape) {
@@ -400,15 +400,15 @@ function turn(shape) {
   var min = 0;
   var i;
   for (i = 0; i < shape.length; i++) {
-  	ret[i] = {};
-  	ret[i].x = -shape[i].y;
-  	if (ret[i].x < min) {
-  		min = ret[i].x;
-  	}
-  	ret[i].y = shape[i].x;
+    ret[i] = {};
+    ret[i].x = -shape[i].y;
+    if (ret[i].x < min) {
+      min = ret[i].x;
+    }
+    ret[i].y = shape[i].x;
   }
   for (i = 0; i < shape.length; i++) {
-  	ret[i].x += -min;
+    ret[i].x += -min;
   }
   return ret;
 }
@@ -436,15 +436,15 @@ function shapeHeight(shape) {
 }
 
 function createMap(width, height) {
-	var ret = [];
-	var i, j;
-	for (i = 0; i < height; i++) {
-		ret[i] = [];
-		for (j = 0; j < width; j++) {
-			ret[i][j] = 0;
-		} 
-	}
-	return ret;
+  var ret = [];
+  var i, j;
+  for (i = 0; i < height; i++) {
+    ret[i] = [];
+    for (j = 0; j < width; j++) {
+      ret[i][j] = 0;
+    } 
+  }
+  return ret;
 }
 
 function rowFull(row) {
@@ -452,7 +452,7 @@ function rowFull(row) {
    for (i = 0; i < row.length; i++) {
      if (row[i] == 0) {
        return false;
-     }	
+     }  
    }
    return true;
 }
@@ -460,8 +460,8 @@ function rowFull(row) {
 function copyRow(map, destRow, srcRow) {
    var i;
    for (i = 0; i < map[0].length; i++) {
-      map[destRow][i]	= map[srcRow][i];
-   }	
+      map[destRow][i] = map[srcRow][i];
+   }  
 }
 
 function fillRow(map, row, v) {
@@ -479,32 +479,32 @@ function findFull(map) {
     if (rowFull(map[i])) {
       ret[count] = i;
       count++;
-    }	
-  }	
+    } 
+  } 
   return ret;
 }
 
 function removeFull(map) {
-	var i = map.length - 1;
-	var j;
-	while (i >= 0 && !rowFull(map[i])) {
-	  i--;	
-	}
-	j = i - 1;
-	while (j >= 0) {
-	  while (j >= 0 && rowFull(map[j])) {
-	  	j--;
-	  } 
-	  if (j >= 0) {
-	    copyRow(map, i, j);
-	    i--;
-	    j--;	
-	  }
-	}	
-	while (i >= 0) {
-	  fillRow(map, i, 0);
-	  i--;
-	}
+  var i = map.length - 1;
+  var j;
+  while (i >= 0 && !rowFull(map[i])) {
+    i--;  
+  }
+  j = i - 1;
+  while (j >= 0) {
+    while (j >= 0 && rowFull(map[j])) {
+      j--;
+    } 
+    if (j >= 0) {
+      copyRow(map, i, j);
+      i--;
+      j--;  
+    }
+  } 
+  while (i >= 0) {
+    fillRow(map, i, 0);
+    i--;
+  }
 }
 
 function canPut(map, shape, x, y) {
@@ -512,31 +512,31 @@ function canPut(map, shape, x, y) {
 }
 
 function canPutPart(map, shape, x, y, startY) {
-	var i, tx, ty;
+  var i, tx, ty;
   for (i = 0; i < 4; i++) {
-  	if (shape[i].y < startY) {
-  		continue;
-  	}
-  	tx = shape[i].x + x;
-  	ty = shape[i].y + y;
+    if (shape[i].y < startY) {
+      continue;
+    }
+    tx = shape[i].x + x;
+    ty = shape[i].y + y;
     if (ty >= map.length || ty < 0 ) {
-    	return false;
+      return false;
     }
     if (tx >= map[0].length || tx < 0) {
-    	return false;
+      return false;
     }
     if (map[ty][tx] > 0) {
-    	return false;
+      return false;
     }
-  }	
+  } 
   return true;
 }
 
 function addShape(map, shape, x, y, colorIndex) {
   var i;
   for (i = 0; i < shape.length; i++) {
-  	map[shape[i].y + y][shape[i].x + x] = colorIndex;
-  }	
+    map[shape[i].y + y][shape[i].x + x] = colorIndex;
+  } 
 }
 
 function computeCenter(containerLength, shapeLength) {
