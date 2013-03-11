@@ -103,6 +103,13 @@ var SHAPES = [
 [{x:1,y:0},{x:2,y:0},{x:0,y:1},{x:1,y:1}]
 ];
 
+var UP = 0,
+    DOWN = 1,
+    LEFT = 2,
+    RIGHT = 3;
+
+var INTERVAL = 500;
+
 var canvas = document.getElementById('canvas');
 var previewCanvas = document.getElementById('preview');
 var controlPane = document.getElementById('control');
@@ -126,6 +133,8 @@ var blinking
 var blinkOn
 var blinkColor;
 var score;
+var touchStartX
+var touchStartY
 
 restart();
 
@@ -139,6 +148,29 @@ window.onkeydown = function(e) {
     case 40: e.preventDefault(); goDown(); break;
   } 
 };
+
+document.addEventListener('touchstart', function onTouchStart(event) {
+	if (stopped || paused) return;
+	event.preventDefault();
+	
+  touchStartX = event.touches[0].pageX;
+  touchStartY = event.touches[0].pageY;  
+}, false);
+
+document.addEventListener('touchend', function onTouchEnd(event) {
+	if (stopped || paused) return;
+	event.preventDefault();
+	
+  touchEndX = event.changedTouches[0].pageX;
+  touchEndY = event.changedTouches[0].pageY;
+
+  switch (computeGesture(touchStartX, touchStartY, touchEndX, touchEndY)) {
+  	  case LEFT: goLeft(); break;
+      case RIGHT: goRight(); break;
+      case UP: goRotate(); break;
+      case DOWN: goDown(); break;
+  }
+}, false);
 
 pauseButton.onclick = function() {
   if (stopped) { 
@@ -180,13 +212,13 @@ function restart() {
   }
   reset();
   drawBoard();
-  timer = setInterval(tick, 500);
+  timer = setInterval(tick, INTERVAL);
   stopped = false;
   paused = false; 
   updateButtonText();
 }
 
-function drawMain (map, startx, starty, shape, x, y, size) {
+function drawMain (map, shape, x, y, size) {
   var i,j;
   var blinkRow = false;
   for (i = 0; i < map.length; i++) {
@@ -194,10 +226,18 @@ function drawMain (map, startx, starty, shape, x, y, size) {
     for (j = 0; j < map[0].length; j++) {
       if (map[i][j] > 0) {
         if (blinkRow && blinkOn) {
-          ctx.clearRect(ctx, j*size+startx, i*size+starty, size, size);
+          ctx.clearRect(ctx, 
+                        j * size, 
+                        i * size, 
+                        size, 
+                        size);
         } else {
           ctx.fillStyle = COLORS[map[i][j]-1];
-          drawBlock(ctx, j*size+startx, i*size+starty, size, size);
+          drawBlock(ctx, 
+                    j * size, 
+                    i * size, 
+                    size, 
+                    size);
         }
       }
     } 
@@ -206,11 +246,11 @@ function drawMain (map, startx, starty, shape, x, y, size) {
     return;
   }
   for (i = 0; i < shape.length; i++) {
-    if ( y+shape[i].y >= 0) {
-        ctx.fillStyle = COLORS[currentColor-1];
+    if ((y + shape[i].y) >= 0) {
+        ctx.fillStyle = COLORS[currentColor - 1];
         drawBlock(ctx, 
-                  (x+shape[i].x)*size+startx, 
-                  (y+shape[i].y)*size+starty, 
+                  (x + shape[i].x) * size, 
+                  (y + shape[i].y) * size, 
                   size, 
                   size);
     }
@@ -218,15 +258,19 @@ function drawMain (map, startx, starty, shape, x, y, size) {
 }
 
 function drawBlock(context, x, y, size) {
-  context.fillRect(x+1, y+1, size-2, size-2);
+  context.fillRect(x + 1, y + 1, size - 2, size - 2);
 }
 
 function drawPreview(shape, x, y, size) {
   var i;
-  previewCtx.clearRect(0, 0, 4*size, 4*size);
-  previewCtx.fillStyle = COLORS[previewColor-1];
+  previewCtx.clearRect(0, 0, 4 * size, 4 * size);
+  previewCtx.fillStyle = COLORS[previewColor - 1];
   for (i = 0; i < shape.length; i++) {
-    drawBlock(previewCtx, (x+shape[i].x)*size, (y+shape[i].y)*size, size, size);
+    drawBlock(previewCtx, 
+             (x + shape[i].x) * size, 
+             (y + shape[i].y) * size, 
+             size, 
+             size);
   }
 }
 
@@ -236,12 +280,10 @@ function drawBoard() {
               map[0].length * BLOCK_SIZE, 
               map.length * BLOCK_SIZE);
   drawMain(map, 
-              0, 
-              canvas.height - map.length * BLOCK_SIZE, 
-              currentShape, 
-              currentX, 
-              currentY, 
-              BLOCK_SIZE);
+           currentShape, 
+           currentX, 
+           currentY, 
+           BLOCK_SIZE);
   drawPreview(previewShape, 
               computeCenter(4, shapeWidth(previewShape)), 
               computeCenter(4, shapeHeight(previewShape)), 
@@ -255,6 +297,30 @@ function updateButtonText() {
   } else {
     pauseButton.value = "Pause";
   }
+}
+
+function computeGesture(startX, startY, endX, endY) {
+
+    var deltaX = endX - startX,
+        deltaY = endY - startY;
+
+    if (deltaX < 0) {
+        if (Math.abs(deltaY) < -deltaX) {
+            return LEFT;  
+        } else if (deltaY > 0) {
+            return DOWN;
+        } else {
+            return UP;
+        }
+    } else {
+        if (Math.abs(deltaY) < deltaX) {
+            return RIGHT;
+        } else if (deltaY > 0) {
+            return DOWN;
+        } else {
+            return UP;
+        }
+    }
 }
 
 function tick() {
@@ -315,7 +381,7 @@ function tick() {
       drawBoard();
       ctx.font = '32pt Helvetica';
       ctx.fillStyle = 'red';
-      ctx.fillText('GAME OVER', canvas.width/2 - 130, 200);
+      ctx.fillText('GAME OVER', canvas.width / 2 - 130, 200);
       clearInterval(timer);
     }
   }, delay);
@@ -323,7 +389,7 @@ function tick() {
 
 function tryPut(shape, relativeX, relativeY) {
   if(canPut(map, shape, 
-            currentX+relativeX, currentY+relativeY)) {
+            currentX + relativeX, currentY + relativeY)) {
     currentShape = shape;
     currentX += relativeX;
     currentY += relativeY;
@@ -361,12 +427,12 @@ function retryRotate(onX, nextShape) {
   var relativeX = 0;
   var telativeY = 0;
   if (onX) { 
-    relativeX = - 1;
+    relativeX = -1;
   } else {
-    telativeY = - 1;
+    telativeY = -1;
   }
   while(tryCount > 0) {
-    if (canPut(map, currentShape, currentX+relativeX, currentY+telativeY)) {
+    if (canPut(map, currentShape, currentX + relativeX, currentY + telativeY)) {
       if (tryPut(nextShape, relativeX, telativeY)) {
         return true;
       } else {
